@@ -19,10 +19,20 @@
 
 ### Python
 
+#### Windows
+
+Install python from the official [website](https://www.python.org/ftp/python/3.11.3/python-3.11.3-amd64.exe).
+
+#### Linux 
+
+```sh
+sudo apt install python
+```
+
 ## Install dependencies
 
 ```sh
-
+pip install -r requirements.txt
 ```
 ## Run the project
 
