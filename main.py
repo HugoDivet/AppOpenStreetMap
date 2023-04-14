@@ -1,13 +1,14 @@
-from flask import Flask, render_template_string
+from flask import Flask
 import folium
 import requests
+from folium.plugins import MarkerCluster
 
 app = Flask(__name__)
 
 
 @app.route("/")
-def fullscreen():
-    row = 100
+def tan_map():
+    row = 4000
     url_api_tan = "https://data.nantesmetropole.fr/api/records/1.0/search/?dataset=244400404_tan-arrets&rows=" + str(
         row)
 
@@ -20,13 +21,18 @@ def fullscreen():
     print(data)
 
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
+
+    marker_cluster = MarkerCluster(name='Markers').add_to(m)
+
     for stop in data['records']:
-        if stop['fields']['location_type'] == '1':
+        if stop['fields']['location_type'] == '0':
             folium.Marker(
                 location=stop['fields']['stop_coordinates'],
                 popup=stop['fields']['stop_name'],
                 icon=folium.Icon(icon="cloud")
-            ).add_to(m)
+            ).add_to(marker_cluster)
+
+    folium.LayerControl().add_to(m)
 
     m.save('index.html')
     return m.get_root().render()
