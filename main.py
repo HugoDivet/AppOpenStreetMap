@@ -30,7 +30,7 @@ for stop in data['records']:
         folium.map.Tooltip(stop['fields']['stop_name'])
         folium.Marker(
             location=stop['fields']['stop_coordinates'],
-            popup=f"<b>{stop['fields']['stop_name']}</b><br><br>" + popup,
+            popup=folium.Popup(f"<h5><b>{stop['fields']['stop_name']}</b></h5><br><br>" + popup, max_width=150),
             tooltip=stop['fields']['stop_name'],
             icon=folium.Icon(icon="train-subway", prefix="fa")
         ).add_to(m)
