@@ -18,18 +18,31 @@ def tan_map():
         data = response.json()
     else:
         print("Erreur lors de la requête : ", response.status_code)
-    print(data)
-
+    #print(data)
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
-
+    
     marker_cluster = MarkerCluster(name='Markers').add_to(m)
+    
+    wheelChairs = {}
+
+    for stopChilds in data['records']:
+        if stopChilds['fields']['location_type'] == '0':
+            accessNumber = int(stopChilds['fields']['wheelchair_boarding'])
+            if accessNumber >= 1:
+                wheelChairs[stopChilds['fields']['parent_station']] = True
 
     for stop in data['records']:
-        if stop['fields']['location_type'] == '0':
+        popup = ""
+        if stop['fields']['location_type'] == '1':
+            if stop['fields']['stop_id'] in wheelChairs:
+                popup = "<i class='fa-sharp fa-solid fa-wheelchair-move'></i>"
+
+            folium.map.Tooltip(stop['fields']['stop_name'])
             folium.Marker(
                 location=stop['fields']['stop_coordinates'],
-                popup=stop['fields']['stop_name'],
-                icon=folium.Icon(icon="cloud")
+                popup=folium.Popup(f"<h5><b>{stop['fields']['stop_name']}</b></h5><br><br>" + popup, max_width=150),
+                tooltip=stop['fields']['stop_name'],
+                icon=folium.Icon(icon="train-subway", prefix="fa")
             ).add_to(marker_cluster)
 
     folium.LayerControl().add_to(m)
