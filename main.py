@@ -3,35 +3,28 @@ import folium
 import requests
 from folium.plugins import MarkerCluster
 
-app = Flask(__name__)
+API_URL = "http://127.0.0.1:8000/"
 
+app = Flask(__name__)
 
 @app.route("/")
 def tan_map():
-    row = 4000
-    url_api_tan = "https://data.nantesmetropole.fr/api/records/1.0/search/?dataset=244400404_tan-arrets&rows=" + str(
-        row)
+    # add ?skip=X&limit=X to add or remove some stops
+    data = requests.get(API_URL + "arrets").json()
 
-    response = requests.get(url_api_tan)
-
-    if response.status_code == 200:
-        data = response.json()
-    else:
-        print("Erreur lors de la requête : ", response.status_code)
-    #print(data)
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
-    
+
     marker_cluster = MarkerCluster(name='Markers').add_to(m)
-    
+
     wheelChairs = {}
 
-    for stopChilds in data['records']:
+    for stopChilds in data:
         if stopChilds['fields']['location_type'] == '0':
             accessNumber = int(stopChilds['fields']['wheelchair_boarding'])
             if accessNumber >= 1:
                 wheelChairs[stopChilds['fields']['parent_station']] = True
 
-    for stop in data['records']:
+    for stop in data:
         popup = ""
         if stop['fields']['location_type'] == '1':
             if stop['fields']['stop_id'] in wheelChairs:
@@ -49,7 +42,6 @@ def tan_map():
 
     m.save('index.html')
     return m.get_root().render()
-
 
 if __name__ == "__main__":
     app.run(debug=True)
