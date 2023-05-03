@@ -10,24 +10,16 @@ app = Flask(__name__)
 @app.route("/")
 def tan_map():
     # add ?skip=X&limit=X to add or remove some stops
-    data = requests.get(API_URL + "arrets").json()
+    stops = requests.get(API_URL + "arrets").json()
 
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
 
     marker_cluster = MarkerCluster(name='Markers').add_to(m)
 
-    wheelChairs = {}
-
-    for stopChilds in data:
-        if stopChilds['fields']['location_type'] == '0':
-            accessNumber = int(stopChilds['fields']['wheelchair_boarding'])
-            if accessNumber >= 1:
-                wheelChairs[stopChilds['fields']['parent_station']] = True
-
-    for stop in data:
+    for stop in stops:
         popup = ""
         if stop['fields']['location_type'] == '1':
-            if stop['fields']['stop_id'] in wheelChairs:
+            if stop['wheelchaired'] == True:
                 popup = "<i class='fa-sharp fa-solid fa-wheelchair-move'></i>"
 
             folium.map.Tooltip(stop['fields']['stop_name'])
