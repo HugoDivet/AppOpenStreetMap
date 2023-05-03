@@ -3,7 +3,6 @@
 ## Table de matières
 
 * [Technologies](#technologies)
-* [Installation](#installation)
 * [Python](#python)
 * [Install dependencies](#install-dependencies)
 * [Run the project](#run-the-project)
@@ -23,7 +22,7 @@
 
 Install python from the official [website](https://www.python.org/ftp/python/3.11.3/python-3.11.3-amd64.exe).
 
-#### Linux 
+#### Linux
 
 ```sh
 sudo apt install python
@@ -34,15 +33,25 @@ sudo apt install python
 ```sh
 pip install -r requirements.txt
 ```
-## Run the project
+
+# Run the project
+## Api
 
 ```sh
-
+python main.py
 ```
 
-On your web browser navigate to [localhost](http://localhost:8100/).
+## Web app
 
-## Contributors
+```sh
+python apiStreetMap.py
+```
+On your web browser navigate to the [webapp](http://localhost:5000/).
+
+## To access to the api swagger
+On your web browser navigate to the [swagger](http://localhost:8000/).
+
+# Contributors
 
 * Gabriel De la Biche
 * Gabriel Filiot
