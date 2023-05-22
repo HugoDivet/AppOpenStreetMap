@@ -38,18 +38,16 @@ pip install -r requirements.txt
 ## Api
 
 ```sh
-python main.py
+python apiStreetMap.py
 ```
+On your web browser navigate to the [swagger](http://localhost:8000/).
 
 ## Web app
 
 ```sh
-python apiStreetMap.py
+python main.py
 ```
 On your web browser navigate to the [webapp](http://localhost:5000/).
-
-## To access to the api swagger
-On your web browser navigate to the [swagger](http://localhost:8000/).
 
 # Contributors
 

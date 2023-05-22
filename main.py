@@ -1,16 +1,21 @@
+import httpx
 from flask import Flask
 import folium
-import requests
 from folium.plugins import MarkerCluster
+from flask_caching import Cache
 
 API_URL = "http://127.0.0.1:8000/"
 
 app = Flask(__name__)
+cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 @app.route("/")
-def tan_map():
+@cache.cached(timeout=3600)
+async def tan_map():
     # add ?skip=X&limit=X to add or remove some stops
-    stops = requests.get(API_URL + "arrets").json()
+    async with httpx.AsyncClient() as client:
+        response = await client.get(API_URL + "arrets")
+        stops = response.json()
 
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
 
@@ -19,7 +24,7 @@ def tan_map():
     for stop in stops:
         popup = ""
         if stop['fields']['location_type'] == '1':
-            if stop['wheelchaired'] == True:
+            if stop['wheelchaired']:
                 popup = "<i class='fa-sharp fa-solid fa-wheelchair-move'></i>"
 
             folium.map.Tooltip(stop['fields']['stop_name'])
