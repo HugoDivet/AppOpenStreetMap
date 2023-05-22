@@ -23,17 +23,15 @@ async def tan_map():
     marker_cluster = MarkerCluster(name='Markers').add_to(m)
 
     tasks = [process_stop(stop, marker_cluster) for stop in stops]
-    for stop in stops:
-        tasks.append(process_stop(stop, marker_cluster))
     await asyncio.gather(*tasks)
 
     folium.LayerControl().add_to(m)
-
     m.save('index.html')
     return m.get_root().render()
 
 async def process_stop(stop, marker_cluster):
     popup = ""
+
     if stop['fields']['location_type'] == '1':
         if stop['wheelchaired']:
             popup = "<i class='fa-sharp fa-solid fa-wheelchair-move'></i>"
