@@ -31,8 +31,8 @@ async def arrets(skip: int = 0, limit: int = 3800):
                 tasks.append(arretFromDatas(stopChilds['fields']['parent_station'], records))
 
     await asyncio.gather(*tasks)
-
     return records[skip: skip + limit]
+
 async def arretFromDatas(id, datas):
     for data in datas:
         if data['fields']['stop_id'] == id:
