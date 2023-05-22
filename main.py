@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
-from flask import Flask
 import folium
+from flask import Flask
 from folium.plugins import MarkerCluster
 from flask_caching import Cache
 
@@ -20,10 +20,9 @@ async def tan_map():
             stops = await response.json()
 
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
-
     marker_cluster = MarkerCluster(name='Markers').add_to(m)
 
-    tasks = []
+    tasks = [process_stop(stop, marker_cluster) for stop in stops]
     for stop in stops:
         tasks.append(process_stop(stop, marker_cluster))
     await asyncio.gather(*tasks)
