@@ -14,11 +14,7 @@ async def root():
 
 @api.get("/arret")
 async def arrets(skip: int = 0, limit: int = 3800):
-    async with aiohttp.ClientSession() as session:
-        url_api_tan = URL_ARRETS + str(limit)
-        async with session.get(url_api_tan) as response:
-                data = await response.json()
-                records = data['records']
+    records = await fetchDatas(URL_ARRETS, limit)
 
     tasks = []
     for stopChilds in records:
@@ -32,11 +28,7 @@ async def arrets(skip: int = 0, limit: int = 3800):
 
 @api.get('/circuit')
 async def circuits(skip: int = 0, limit: int = 110):
-    async with aiohttp.ClientSession() as session:
-        url_api_tan = URL_CIRCUITS + str(limit)
-        async with session.get(url_api_tan) as response:
-                data = await response.json()
-                records = data['records']
+    records = await fetchDatas(URL_CIRCUITS, limit)
 
     tasks = []
     circuitsModel = []
@@ -45,6 +37,13 @@ async def circuits(skip: int = 0, limit: int = 110):
     await asyncio.gather(*tasks)
 
     return circuitsModel[skip: skip + limit]
+
+async def fetchDatas(URL, limit):
+    async with aiohttp.ClientSession() as session:
+        url_api_tan = URL + str(limit)
+        async with session.get(url_api_tan) as response:
+            data = await response.json()
+            return data['records']
 
 async def arretFromDatas(id, datas):
     for data in datas:

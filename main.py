@@ -77,7 +77,7 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
             ).add_to(markerCluster)
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
-    print(circuit)
+
     if circuit['circuit_type'] == 'Bus':
         lineCluster = buslinecluster
     elif circuit['circuit_type'] == 'Tram':
