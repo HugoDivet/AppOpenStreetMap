@@ -14,22 +14,24 @@ cache = Cache(app, config={"CACHE_TYPE": "simple"})
 @app.route("/")
 @cache.cached(CACHE_TIMEOUT)
 async def tan_map():
-    # add ?skip=X&limit=X to add or remove some stops
-    async with aiohttp.ClientSession() as session:
-        async with session.get(API_URL + "arret") as response:
-            stops = await response.json()
+
+    stops = await fetchDatas('arret')
+    circuits = await fetchDatas('circuit')
 
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=13)
     marker_cluster = MarkerCluster(name='Markers').add_to(m)
 
-    tasks = [process_stop(stop, marker_cluster) for stop in stops]
-    await asyncio.gather(*tasks)
+    stopsTasks = [processStop(stop, marker_cluster) for stop in stops]
+    circuitsTasks = [processCircuit(circuit, m) for circuit in circuits]
+
+    await asyncio.gather(*stopsTasks)
+    await asyncio.gather(*circuitsTasks)
 
     folium.LayerControl().add_to(m)
     m.save('index.html')
     return m.get_root().render()
 
-async def process_stop(stop, marker_cluster):
+async def processStop(stop, marker_cluster):
     popup = ""
 
     if stop['fields']['location_type'] == '1':
@@ -43,6 +45,20 @@ async def process_stop(stop, marker_cluster):
             tooltip=stop['fields']['stop_name'],
             icon=folium.Icon(icon="train-subway", prefix="fa")
         ).add_to(marker_cluster)
+
+async def processCircuit(circuit, m):
+
+    folium.PolyLine(
+        locations=circuit['coordinates'],
+        color=circuit['circuit_color'],
+        weight=2,
+        opacity=1
+    ).add_to(m)
+
+async def fetchDatas(route):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(API_URL + route) as response:
+            return await response.json()
 
 if __name__ == "__main__":
     app.run(debug=True)
