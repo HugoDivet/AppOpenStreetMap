@@ -4,6 +4,7 @@ import folium
 from flask import Flask
 from folium.plugins import FastMarkerCluster
 from flask_caching import Cache
+from clusters import cluster_options
 
 API_URL = "http://127.0.0.1:8000/"
 CACHE_TIMEOUT = 3600
@@ -18,21 +19,29 @@ async def tan_map():
     stops = await fetchDatas('arret')
     circuits = await fetchDatas('circuit')
 
-    m = folium.Map(location=[47.2301, -1.5429], zoom_start=13, tiles='cartodbdark_matter')
+    m = folium.Map(location=[47.2301, -1.5429], zoom_start=12, tiles='cartodbdark_matter')
 
-    busMarkersCluster = FastMarkerCluster(name='Arrêts de bus', data=[], options={'disableClusteringZoom': 13}).add_to(m)
-    tramMarkersCluster = FastMarkerCluster(name='Arrêts de tram', data=[], options={'disableClusteringZoom': 16}).add_to(m)
-    ferryMarkersCluster = FastMarkerCluster(name='Arrêts de navibus', data=[]).add_to(m)
+    clusters = {}
 
-    busLineCluster = FastMarkerCluster(name='Lignes de bus', data=[]).add_to(m)
-    tramLineCluster = FastMarkerCluster(name='Lignes de tram', data=[]).add_to(m)
-    ferryLineCluster = FastMarkerCluster(name='Lignes de navibus', data=[]).add_to(m)
+    for cluster_name, options in cluster_options.items():
+        clusters[cluster_name] = FastMarkerCluster(name=options['name'], data=options['data'], options=options.get('options')).add_to(m)
 
-    stopsTasks = [processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster) for stop in stops]
-    circuitsTasks = [processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster) for circuit in circuits]
+    busMarkersCluster = clusters['busMarkersCluster']
+    tramMarkersCluster = clusters['tramMarkersCluster']
+    ferryMarkersCluster = clusters['ferryMarkersCluster']
+    busLineCluster = clusters['busLineCluster']
+    tramLineCluster = clusters['tramLineCluster']
+    ferryLineCluster = clusters['ferryLineCluster']
 
-    await asyncio.gather(*stopsTasks)
-    await asyncio.gather(*circuitsTasks)
+    stopsTasks = []
+    for stop in stops:
+        stopsTasks.append(asyncio.create_task(processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster)))
+
+    circuitsTasks = []
+    for circuit in circuits:
+        circuitsTasks.append(asyncio.create_task(processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster)))
+
+    await asyncio.gather(*stopsTasks, *circuitsTasks)
 
     folium.LayerControl().add_to(m)
     m.save('index.html')
