@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 import folium
-from flask import Flask
+from flask import Flask, url_for
 from folium.plugins import FastMarkerCluster
 from flask_caching import Cache
 
@@ -44,8 +44,10 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
 
     if stop['fields']['location_type'] == '1':
         if stop['wheelchaired']:
-            popup = "<i class='fa-sharp fa-solid fa-wheelchair-move'></i>"
-
+            popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
+        if stop['fields']['stop_name'] == 'Ile de Nantes':
+            image_url = "/static/IleDeNantes.png"
+            popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
         arrayStop = getStopArray(getAssociatedCircuitType(stop, circuits))
 
         if arrayStop is not None :
@@ -62,7 +64,8 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
             folium.map.Tooltip(stop['fields']['stop_name'])
             folium.Marker(
                 location=stop['fields']['stop_coordinates'],
-                popup=folium.Popup(f"<h5><b>{stop['fields']['stop_name']}</b></h5><br><br>" + popup, max_width=150),
+                popup=folium.Popup(f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'>"
+                                   f"<b>{stop['fields']['stop_name']}</b></h5><br><br>" + popup, max_width='auto'),
                 tooltip=stop['fields']['stop_name'],
                 icon=folium.Icon(color, icon=arrayStop[0], prefix="fa"),
             ).add_to(markerCluster)
