@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 import folium
-from flask import Flask, url_for
+from flask import Flask
 from folium.plugins import FastMarkerCluster
 from flask_caching import Cache
 
