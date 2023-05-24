@@ -29,58 +29,49 @@ async def tan_map():
     busMarkersCluster = clusters['busMarkersCluster']
     tramMarkersCluster = clusters['tramMarkersCluster']
     ferryMarkersCluster = clusters['ferryMarkersCluster']
+
     busLineCluster = clusters['busLineCluster']
     tramLineCluster = clusters['tramLineCluster']
     ferryLineCluster = clusters['ferryLineCluster']
 
-    stopsTasks = []
-    for stop in stops:
-        stopsTasks.append(asyncio.create_task(processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster)))
-
-    circuitsTasks = []
-    for circuit in circuits:
-        circuitsTasks.append(asyncio.create_task(processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster)))
+    stopsTasks = [processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster) for stop in stops]
+    circuitsTasks = [processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster) for circuit in circuits]
 
     await asyncio.gather(*stopsTasks, *circuitsTasks)
+
     create_legend(m)
     folium.LayerControl().add_to(m)
     m.save('index.html')
+
     return m.get_root().render()
 
 async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
 
     popup = ""
 
+    stop_name = stop['fields']['stop_name']
+
     if stop['fields']['location_type'] == '1':
         if stop['wheelchaired']:
             popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
-        if stop['fields']['stop_name'] == 'Ile de Nantes':
+        if stop_name == 'Ile de Nantes':
             image_url = "/static/IleDeNantes.png"
             popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
         arrayStop = getStopArray(getAssociatedCircuitType(stop, circuits))
 
         if arrayStop is not None :
-            if arrayStop[1] == 'busMarkersCluster':
-                markerCluster = busmarkerscluster
-                color = 'red'
-            elif arrayStop[1] == 'tramMarkersCluster':
-                markerCluster = trammarkerscluster
-                color = 'green'
-            elif arrayStop[1] == 'ferryMarkersCluster':
-                markerCluster = ferrymarkerscluster
-                color = 'blue'
+            markerCluster, color = getMarkerCluster(arrayStop[1], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
 
-            folium.map.Tooltip(stop['fields']['stop_name'])
+            folium.map.Tooltip(stop_name)
             folium.Marker(
                 location=stop['fields']['stop_coordinates'],
                 popup=folium.Popup(f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'>"
-                                   f"<b>{stop['fields']['stop_name']}</b></h5><br><br>" + popup, max_width='auto'),
-                tooltip=stop['fields']['stop_name'],
+                                   f"<b>{stop_name}</b></h5><br><br>" + popup, max_width='auto'),
+                tooltip=stop_name,
                 icon=folium.Icon(color, icon=arrayStop[0], prefix="fa"),
             ).add_to(markerCluster)
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
-    print(circuit)
     if circuit['circuit_type'] == 'Bus':
         lineCluster = buslinecluster
     elif circuit['circuit_type'] == 'Tram':
@@ -105,8 +96,8 @@ def getAssociatedCircuitType(stop, circuits):
 
     return next(
             (circuit['circuit_type'] for circuit in circuits if any(
-                abs(circuit_coord[0] - stop_coords[0]) <= 0.002
-                and abs(circuit_coord[1] - stop_coords[1]) <= 0.002
+                abs(circuit_coord[0] - stop_coords[0]) <= 0.001
+                and abs(circuit_coord[1] - stop_coords[1]) <= 0.001
                 for circuit_coord in circuit['coordinates']
             )),
             'None'
@@ -120,6 +111,14 @@ def getStopArray(stop):
             return ['train-subway', 'tramMarkersCluster']
         case 'Ferry':
             return ['ship', 'ferryMarkersCluster']
+
+def getMarkerCluster(type, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
+    if type == 'busMarkersCluster':
+        return busmarkerscluster, 'blue'
+    elif type == 'tramMarkersCluster':
+        return trammarkerscluster, 'green'
+    elif type == 'ferryMarkersCluster':
+        return ferrymarkerscluster, 'red'
 
 def create_legend(m):
     legend_html = """
