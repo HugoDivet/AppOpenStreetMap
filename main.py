@@ -29,6 +29,7 @@ async def tan_map():
     busMarkersCluster = clusters['busMarkersCluster']
     tramMarkersCluster = clusters['tramMarkersCluster']
     ferryMarkersCluster = clusters['ferryMarkersCluster']
+
     busLineCluster = clusters['busLineCluster']
     tramLineCluster = clusters['tramLineCluster']
     ferryLineCluster = clusters['ferryLineCluster']
@@ -37,9 +38,11 @@ async def tan_map():
     circuitsTasks = [processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster) for circuit in circuits]
 
     await asyncio.gather(*stopsTasks, *circuitsTasks)
+
     create_legend(m)
     folium.LayerControl().add_to(m)
     m.save('index.html')
+
     return m.get_root().render()
 
 async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
@@ -57,15 +60,7 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
         arrayStop = getStopArray(getAssociatedCircuitType(stop, circuits))
 
         if arrayStop is not None :
-            if arrayStop[1] == 'busMarkersCluster':
-                markerCluster = busmarkerscluster
-                color = 'blue'
-            elif arrayStop[1] == 'tramMarkersCluster':
-                markerCluster = trammarkerscluster
-                color = 'green'
-            elif arrayStop[1] == 'ferryMarkersCluster':
-                markerCluster = ferrymarkerscluster
-                color = 'red'
+            markerCluster, color = getMarkerCluster(arrayStop[1], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
 
             folium.map.Tooltip(stop_name)
             folium.Marker(
@@ -77,7 +72,6 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
             ).add_to(markerCluster)
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
-
     if circuit['circuit_type'] == 'Bus':
         lineCluster = buslinecluster
     elif circuit['circuit_type'] == 'Tram':
@@ -117,6 +111,14 @@ def getStopArray(stop):
             return ['train-subway', 'tramMarkersCluster']
         case 'Ferry':
             return ['ship', 'ferryMarkersCluster']
+
+def getMarkerCluster(type, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
+    if type == 'busMarkersCluster':
+        return busmarkerscluster, 'blue'
+    elif type == 'tramMarkersCluster':
+        return trammarkerscluster, 'green'
+    elif type == 'ferryMarkersCluster':
+        return ferrymarkerscluster, 'red'
 
 def create_legend(m):
     legend_html = """
