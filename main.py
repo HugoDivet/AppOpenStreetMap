@@ -42,7 +42,7 @@ async def tan_map():
         circuitsTasks.append(asyncio.create_task(processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster)))
 
     await asyncio.gather(*stopsTasks, *circuitsTasks)
-
+    create_legend(m)
     folium.LayerControl().add_to(m)
     m.save('index.html')
     return m.get_root().render()
@@ -121,6 +121,59 @@ def getStopArray(stop):
         case 'Ferry':
             return ['ship', 'ferryMarkersCluster']
 
+def create_legend(m):
+    legend_html = """
+            <div class="card legend-card" style="position: absolute; bottom: 20px; right: 20px; z-index: 1000;">
+                <div class="card-header">
+                    <h5 class="card-title" style="margin-bottom: 0;">
+                        Légende :
+                        <span class="legend-toggle" style="cursor: pointer;float: right;"><i class="fas fa-minus"></i></span>
+                    </h5>
+                </div>
+                <div class="card-body" style="display: block;">
+                    <div class="legend">
+                        <div>
+                            <i class="fa fa-bus" style="color: red;"></i>
+                            <span>Arrêts de bus</span>
+                        </div>
+                        <div>
+                            <i class="fa fa-train" style="color: green;"></i>
+                            <span>Arrêts de tram</span>
+                        </div>
+                        <div>
+                            <i class="fa fa-ship" style="color: blue;"></i>
+                            <span>Arrêts de navibus</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        """
+
+    # Add the legend to the map
+    folium.Element(legend_html).add_to(m.get_root().html)
+
+    # Add JavaScript code to toggle legend visibility
+    javascript = """
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var toggleElement = document.querySelector('.legend-toggle');
+                var legendBody = document.querySelector('.legend-card .card-body');
+
+                toggleElement.addEventListener('click', function() {
+                    if (legendBody.style.display === 'none') {
+                        legendBody.style.display = 'block';
+                        toggleElement.innerHTML = '<i class="fas fa-minus"></i>';
+                    } else {
+                        legendBody.style.display = 'none';
+                        toggleElement.innerHTML = '<i class="fas fa-plus"></i>';
+                    }
+                });
+            });
+            </script>
+        """
+
+    # Add the JavaScript code to the map
+    m.get_root().html.add_child(folium.Element(javascript))
 
 if __name__ == "__main__":
     app.run(debug=True)
