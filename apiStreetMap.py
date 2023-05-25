@@ -59,6 +59,7 @@ async def process_circuit(circuit):
 
     circuitModel = {
         'circuit_id': circuit['fields']['route_id'],
+        'circuit_number': circuit['fields']['route_short_name'],
         'circuit_name': circuit['fields']['route_long_name'],
         'coordinates': inverted_coordinates,
         'circuit_color': '#' + circuit['fields']['route_color'],

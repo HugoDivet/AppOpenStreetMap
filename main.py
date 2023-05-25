@@ -72,15 +72,28 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
             ).add_to(markerCluster)
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
+
+    circuit_name = circuit['circuit_name']
+    circuit_number = circuit['circuit_number']
+    circuit_color = circuit['circuit_color']
+
+    popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
+            f"padding:5px;border-radius:5px;'>{circuit_number}</div></b></span></h4><br>"  \
+            f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'><b>{circuit_name}</b></h5>"
+
     if circuit['circuit_type'] == 'Bus':
         lineCluster = buslinecluster
+        popup += "<i class='fa-sharp fa-solid fa-bus' style='font-size: 24px;'></i><br><br>"
     elif circuit['circuit_type'] == 'Tram':
         lineCluster = tramlinecluster
+        popup += "<i class='fa-sharp fa-solid fa-train' style='font-size: 24px;'></i><br><br>"
     elif circuit['circuit_type'] == 'Ferry':
         lineCluster = ferrylinecluster
+        popup += "<i class='fa-sharp fa-solid fa-ship' style='font-size: 24px;'></i><br><br>"
 
     folium.PolyLine(
         locations=circuit['coordinates'],
+        popup=folium.Popup(popup, max_width='auto'),
         color=circuit['circuit_color'],
         weight=2,
         opacity=1
@@ -132,7 +145,7 @@ def create_legend(m):
                 <div class="card-body" style="display: block;">
                     <div class="legend">
                         <div>
-                            <i class="fa fa-bus" style="color: red;"></i>
+                            <i class="fa fa-bus" style="color: blue;"></i>
                             <span>Arrêts de bus</span>
                         </div>
                         <div>
@@ -140,7 +153,7 @@ def create_legend(m):
                             <span>Arrêts de tram</span>
                         </div>
                         <div>
-                            <i class="fa fa-ship" style="color: blue;"></i>
+                            <i class="fa fa-ship" style="color: red;"></i>
                             <span>Arrêts de navibus</span>
                         </div>
                     </div>
