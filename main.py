@@ -3,21 +3,17 @@ import aiohttp
 import folium
 from flask import Flask
 from folium.plugins import FastMarkerCluster
-from flask_caching import Cache
 from clusters import cluster_options
 
 API_URL = "http://127.0.0.1:8000/"
-CACHE_TIMEOUT = 3600
 
 app = Flask(__name__)
-cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 @app.route("/")
-@cache.cached(CACHE_TIMEOUT)
 async def tan_map():
 
-    stops = await fetchDatas('arret')
     circuits = await fetchDatas('circuit')
+    stops = await fetchDatas('arret')
 
     m = folium.Map(location=[47.2301, -1.5429], zoom_start=12, tiles='cartodbdark_matter')
 
@@ -33,8 +29,8 @@ async def tan_map():
     busLineCluster = clusters['busLineCluster']
     tramLineCluster = clusters['tramLineCluster']
     ferryLineCluster = clusters['ferryLineCluster']
-
-    stopsTasks = [processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster) for stop in stops]
+    dict = {}
+    stopsTasks = [processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster, dict) for stop in stops]
     circuitsTasks = [processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster) for circuit in circuits]
 
     await asyncio.gather(*stopsTasks, *circuitsTasks)
@@ -45,93 +41,74 @@ async def tan_map():
 
     return m.get_root().render()
 
-async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
+async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, ferrymarkerscluster, dict):
 
     popup = ""
 
-    stop_name = stop['fields']['stop_name']
+    if stop is not None and 'type' in stop:
 
-    if stop['fields']['location_type'] == '1':
-        if stop['wheelchaired']:
-            popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
-        if stop_name == 'Ile de Nantes':
-            image_url = "/static/IleDeNantes.png"
-            popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
-        arrayStop = getStopArray(getAssociatedCircuitType(stop, circuits))
+        if stop['parent_id'] not in dict:
+            dict[stop['parent_id']] = {}
+        if stop['type'] not in dict[stop['parent_id']]:
+            stop_name = stop['name']
+            dict[stop['parent_id']][stop['type']] = [True]
 
-        if arrayStop is not None :
-            markerCluster, color = getMarkerCluster(arrayStop[1], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
+            if stop['wheelchaired']:
+                popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
+                if stop_name == 'Ile de Nantes':
+                    image_url = "/static/IleDeNantes.png"
+                    popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
 
+            markerCluster, color, icon = getMarkerCluster(stop['type'], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
+            correspondences = await createCorrespondences(stop)
             folium.map.Tooltip(stop_name)
             folium.Marker(
-                location=stop['fields']['stop_coordinates'],
+                location=stop['coordinate'],
                 popup=folium.Popup(f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'>"
-                                   f"<b>{stop_name}</b></h5><br><br>" + popup, max_width='auto'),
+                                   f"<b>{stop_name}</b></h5><br><br>" + popup + "<br>" + correspondences, max_width='auto'),
                 tooltip=stop_name,
-                icon=folium.Icon(color, icon=arrayStop[0], prefix="fa"),
+                icon=folium.Icon(color, icon=icon, prefix="fa"),
             ).add_to(markerCluster)
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
 
-    circuit_name = circuit['circuit_name']
-    circuit_number = circuit['circuit_number']
-    circuit_color = circuit['circuit_color']
+    if circuit is not None:
 
-    popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
-            f"padding:5px;border-radius:5px;'>{circuit_number}</div></b></span></h4><br>"  \
-            f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'><b>{circuit_name}</b></h5>"
+        circuit_name = circuit['circuit_name']
+        circuit_color = circuit['circuit_color']
+        popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
+            f"padding:5px;border-radius:5px;'>{circuit_name}</div></b></span></h4><br>"
 
-    if circuit['circuit_type'] == 'Bus':
-        lineCluster = buslinecluster
-        popup += "<i class='fa-sharp fa-solid fa-bus' style='font-size: 24px;'></i><br><br>"
-    elif circuit['circuit_type'] == 'Tram':
-        lineCluster = tramlinecluster
-        popup += "<i class='fa-sharp fa-solid fa-train' style='font-size: 24px;'></i><br><br>"
-    elif circuit['circuit_type'] == 'Ferry':
-        lineCluster = ferrylinecluster
-        popup += "<i class='fa-sharp fa-solid fa-ship' style='font-size: 24px;'></i><br><br>"
+        if circuit['circuit_type'] == 'Bus':
+            lineCluster = buslinecluster
+            popup += "<i class='fa-sharp fa-solid fa-bus' style='font-size: 24px;'></i><br><br>"
+        elif circuit['circuit_type'] == 'Tram':
+            lineCluster = tramlinecluster
+            popup += "<i class='fa-sharp fa-solid fa-train' style='font-size: 24px;'></i><br><br>"
+        elif circuit['circuit_type'] == 'Ferry':
+            lineCluster = ferrylinecluster
+            popup += "<i class='fa-sharp fa-solid fa-ship' style='font-size: 24px;'></i><br><br>"
 
-    folium.PolyLine(
-        locations=circuit['coordinates'],
-        popup=folium.Popup(popup, max_width='auto'),
-        color=circuit['circuit_color'],
-        weight=2,
-        opacity=1
-    ).add_to(lineCluster)
+        folium.PolyLine(
+            locations=circuit['coordinates'],
+            popup=folium.Popup(popup, max_width='auto'),
+            color=circuit['circuit_color'],
+            weight=2,
+            opacity=1
+        ).add_to(lineCluster)
 
 async def fetchDatas(route):
     async with aiohttp.ClientSession() as session:
         async with session.get(API_URL + route) as response:
             return await response.json()
 
-def getAssociatedCircuitType(stop, circuits):
-    stop_coords = stop['fields']['stop_coordinates']
-
-    return next(
-            (circuit['circuit_type'] for circuit in circuits if any(
-                abs(circuit_coord[0] - stop_coords[0]) <= 0.001
-                and abs(circuit_coord[1] - stop_coords[1]) <= 0.001
-                for circuit_coord in circuit['coordinates']
-            )),
-            'None'
-    )
-
-def getStopArray(stop):
-    match stop:
-        case 'Bus':
-            return ['bus', 'busMarkersCluster']
-        case 'Tram':
-            return ['train-subway', 'tramMarkersCluster']
-        case 'Ferry':
-            return ['ship', 'ferryMarkersCluster']
-
 def getMarkerCluster(type, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
-    if type == 'busMarkersCluster':
-        return busmarkerscluster, 'blue'
-    elif type == 'tramMarkersCluster':
-        return trammarkerscluster, 'green'
-    elif type == 'ferryMarkersCluster':
-        return ferrymarkerscluster, 'red'
+    if type == 'Bus':
+        return busmarkerscluster, 'blue', 'bus'
+    elif type == 'Tram':
+        return trammarkerscluster, 'green', 'train-subway'
+    elif type == 'Ferry':
+        return ferrymarkerscluster, 'red', 'ship'
 
 def create_legend(m):
     legend_html = """
@@ -186,6 +163,29 @@ def create_legend(m):
 
     # Add the JavaScript code to the map
     m.get_root().html.add_child(folium.Element(javascript))
+
+async def createCorrespondences(stop):
+    popup_content = """
+    <h4>Lignes :</p>
+    <ul style='list-style: none; margin-left: -20px;'>
+        {correspondences}
+    </ul>
+    """
+    correspondence_list = ""
+
+    for correspondence in stop['correspondences']:
+        line_color = correspondence['color']
+        line_name = correspondence['name']
+        square_html = f"<div>"
+        square_html += f"<div style='display: flex; align-items: center; justify-content: center; width: 55px; height: 40px; background-color: {line_color};'><span style='font-weight: bold; color:white;'>{line_name}</span></div>"
+        square_html += "</div>"
+        correspondence_html = f"<li style='margin-bottom: 5px;'>{square_html}</li>"
+        correspondence_list += correspondence_html
+
+
+    popup_content = popup_content.format(correspondences=correspondence_list)
+
+    return popup_content
 
 if __name__ == "__main__":
     app.run(debug=True)
