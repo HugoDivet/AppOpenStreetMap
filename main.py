@@ -2,6 +2,7 @@ import asyncio
 import aiohttp
 import folium
 from flask import Flask
+from folium import Tooltip
 from folium.plugins import FastMarkerCluster
 from clusters import cluster_options
 
@@ -91,13 +92,15 @@ async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinec
             lineCluster = ferrylinecluster
             popup += "<i class='fa-sharp fa-solid fa-ship' style='font-size: 24px;'></i><br><br>"
 
-        folium.PolyLine(
+        line = folium.PolyLine(
             locations=circuit['coordinates'],
-            popup=folium.Popup(popup, max_width='auto'),
             color=circuit['circuit_color'],
             weight=4,
             opacity=1
         ).add_to(lineCluster)
+
+        line.add_child(Tooltip(popup))
+
 
 async def fetchDatas(route):
     async with aiohttp.ClientSession() as session:
