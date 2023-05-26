@@ -39,9 +39,6 @@ async def arrets(skip: int = 0, limit: int = 3800):
     tasksMergeCorrespondences = [mergeCorrespondences(informationsStop, informationsStops) for informationsStop in informationsStops]
     correspondancesMerged = await asyncio.gather(*tasksMergeCorrespondences)
 
-    # Delete redondant stops
-    #tasksMergeStops = [deleteRedondantStops(stop, correspondancesMerged) for stop in correspondancesMerged]
-    #mergeStops = await asyncio.gather(*tasksMergeStops)
     return correspondancesMerged[skip: skip + limit]
 
 async def processStop(stop, stops):
@@ -50,14 +47,16 @@ async def processStop(stop, stops):
             'id' : stop['fields']['stop_id'],
             'name' : stop['fields']['stop_name'],
             'coordinate' : stop['fields']['stop_coordinates'],
-            'wheelchaired': True if stop['fields']['wheelchair_boarding'] >= str(1) else False
+            'wheelchaired': True if stop['fields']['wheelchair_boarding'] >= str(1) else False,
+            'parent_id': stop['fields']['parent_station']
         }
     else :
         arretModel = {
             'id' : stop['fields']['stop_id'],
             'name' : stop['fields']['stop_name'],
             'coordinate' : stop['fields']['stop_coordinates'],
-            'wheelchaired': await getWheelchair(stop['fields']['stop_id'], stops)
+            'wheelchaired': await getWheelchair(stop['fields']['stop_id'], stops),
+            'parent_id' : stop['fields']['stop_id']
         }
     return arretModel
 
@@ -94,37 +93,6 @@ async def mergeCorrespondences(stop, existingStops):
                     stop['correspondences'].extend([correspondence])
 
     return stop
-
-async def deleteRedondantStops(stop, correspondancesMerged, stops = []):
-
-    tasksMergeStops = []
-    elementsASupprimer = []
-
-    for correspondanceMerged in correspondancesMerged:
-        if correspondanceMerged['correspondences'] != [] and correspondanceMerged['name'] == stop['name'] \
-                and 'type' in correspondanceMerged \
-                and 'type' in stop \
-                and correspondanceMerged['type'] == stop['type'] \
-                and await listAreSame(correspondanceMerged['correspondences'], stop['correspondences']) :
-            elementsASupprimer.append(correspondanceMerged)
-    #print("Elements à supp : " + str(elementsASupprimer))
-    #print("Before : " + str(correspondancesMerged))
-    for element in elementsASupprimer:
-        correspondancesMerged.remove(element)
-    #print("After : " + str(correspondancesMerged))
-
-    return stop
-
-
-async def listAreSame(list1, list2):
-    if len(list1) == len(list2):
-        for item in list1:
-            if item not in list2:
-                return False
-        else:
-            return True
-    else:
-        return False
 
 @api.get('/circuit')
 @cached(cache)

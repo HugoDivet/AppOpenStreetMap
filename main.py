@@ -29,8 +29,8 @@ async def tan_map():
     busLineCluster = clusters['busLineCluster']
     tramLineCluster = clusters['tramLineCluster']
     ferryLineCluster = clusters['ferryLineCluster']
-
-    stopsTasks = [processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster) for stop in stops]
+    dict = {}
+    stopsTasks = [processStop(stop, circuits, m, busMarkersCluster, tramMarkersCluster, ferryMarkersCluster, dict) for stop in stops]
     circuitsTasks = [processCircuit(circuit, m, busLineCluster, tramLineCluster, ferryLineCluster) for circuit in circuits]
 
     await asyncio.gather(*stopsTasks, *circuitsTasks)
@@ -41,28 +41,34 @@ async def tan_map():
 
     return m.get_root().render()
 
-async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, ferrymarkerscluster):
+async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, ferrymarkerscluster, dict):
 
     popup = ""
 
     if stop is not None and 'type' in stop:
-        stop_name = stop['name']
-        if stop['wheelchaired']:
-            popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
-        if stop_name == 'Ile de Nantes':
-            image_url = "/static/IleDeNantes.png"
-            popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
 
-        markerCluster, color, icon = getMarkerCluster(stop['type'], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
-        correspondences = await createCorrespondences(stop)
-        folium.map.Tooltip(stop_name)
-        folium.Marker(
-            location=stop['coordinate'],
-            popup=folium.Popup(f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'>"
-                               f"<b>{stop_name}</b></h5><br><br>" + popup + "<br>" + correspondences, max_width='auto'),
-            tooltip=stop_name,
-            icon=folium.Icon(color, icon=icon, prefix="fa"),
-        ).add_to(markerCluster)
+        if stop['parent_id'] not in dict:
+            dict[stop['parent_id']] = {}
+        if stop['type'] not in dict[stop['parent_id']]:
+            stop_name = stop['name']
+            dict[stop['parent_id']][stop['type']] = [True]
+
+            if stop['wheelchaired']:
+                popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
+                if stop_name == 'Ile de Nantes':
+                    image_url = "/static/IleDeNantes.png"
+                    popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
+
+            markerCluster, color, icon = getMarkerCluster(stop['type'], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
+            correspondences = await createCorrespondences(stop)
+            folium.map.Tooltip(stop_name)
+            folium.Marker(
+                location=stop['coordinate'],
+                popup=folium.Popup(f"<h5 style='white-space: nowrap;overflow: hidden;text-overflow: ellipsis;'>"
+                                   f"<b>{stop_name}</b></h5><br><br>" + popup + "<br>" + correspondences, max_width='auto'),
+                tooltip=stop_name,
+                icon=folium.Icon(color, icon=icon, prefix="fa"),
+            ).add_to(markerCluster)
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
 
