@@ -51,7 +51,7 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
             popup = "<i class='fa-sharp fa-solid fa-wheelchair-move' style='font-size: 24px;'></i><br><br>"
         if stop_name == 'Ile de Nantes':
             image_url = "/static/IleDeNantes.png"
-            popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt'>"
+            popup += f"<br><br><img src='{image_url}' alt='Photo de l'arrêt' width='300' height='168'>"
 
         markerCluster, color, icon = getMarkerCluster(stop['type'], busmarkerscluster, trammarkerscluster, ferrymarkerscluster)
         correspondences = await createCorrespondences(stop)
@@ -70,7 +70,8 @@ async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinec
 
         circuit_name = circuit['circuit_name']
         circuit_color = circuit['circuit_color']
-        popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
+        text_color = "#000000" if circuit_color == "#ffffff" else "#ffffff"
+        popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:{text_color};" \
             f"padding:5px;border-radius:5px;'>{circuit_name}</div></b></span></h4><br>"
 
         if circuit['circuit_type'] == 'Bus':
@@ -78,7 +79,7 @@ async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinec
             popup += "<i class='fa-sharp fa-solid fa-bus' style='font-size: 24px;'></i><br><br>"
         elif circuit['circuit_type'] == 'Tram':
             lineCluster = tramlinecluster
-            popup += "<i class='fa-sharp fa-solid fa-train' style='font-size: 24px;'></i><br><br>"
+            popup += "<i class='fa-sharp fa-solid fa-train-tram' style='font-size: 24px;'></i><br><br>"
         elif circuit['circuit_type'] == 'Ferry':
             lineCluster = ferrylinecluster
             popup += "<i class='fa-sharp fa-solid fa-ship' style='font-size: 24px;'></i><br><br>"
@@ -100,7 +101,7 @@ def getMarkerCluster(type, busmarkerscluster, trammarkerscluster, ferrymarkerscl
     if type == 'Bus':
         return busmarkerscluster, 'blue', 'bus'
     elif type == 'Tram':
-        return trammarkerscluster, 'green', 'train-subway'
+        return trammarkerscluster, 'green', 'train-tram'
     elif type == 'Ferry':
         return ferrymarkerscluster, 'red', 'ship'
 
@@ -120,7 +121,7 @@ def create_legend(m):
                             <span>Arrêts de bus</span>
                         </div>
                         <div>
-                            <i class="fa fa-train" style="color: green;"></i>
+                            <i class="fa fa-train-tram" style="color: green;"></i>
                             <span>Arrêts de tram</span>
                         </div>
                         <div>
@@ -170,8 +171,9 @@ async def createCorrespondences(stop):
     for correspondence in stop['correspondences']:
         line_color = correspondence['color']
         line_name = correspondence['name']
+        text_color = "#000000" if line_color == "#ffffff" else "#ffffff"
         square_html = f"<div>"
-        square_html += f"<div style='display: flex; align-items: center; justify-content: center; width: 55px; height: 40px; background-color: {line_color};'><span style='font-weight: bold; color:white;'>{line_name}</span></div>"
+        square_html += f"<div style='display: flex; align-items: center; justify-content: center; width: 55px; height: 40px; background-color: {line_color};'><span style='font-weight: bold; color:{text_color};'>{line_name}</span></div>"
         square_html += "</div>"
         correspondence_html = f"<li style='margin-bottom: 5px;'>{square_html}</li>"
         correspondence_list += correspondence_html
