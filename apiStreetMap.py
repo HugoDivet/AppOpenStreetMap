@@ -40,9 +40,9 @@ async def arrets(skip: int = 0, limit: int = 3800):
     correspondancesMerged = await asyncio.gather(*tasksMergeCorrespondences)
 
     # Delete redondant stops
-    tasksMergeStops = [deleteRedondantStops(stop, correspondancesMerged) for stop in correspondancesMerged]
-    mergeStops = await asyncio.gather(*tasksMergeStops)
-    return mergeStops[skip: skip + limit]
+    #tasksMergeStops = [deleteRedondantStops(stop, correspondancesMerged) for stop in correspondancesMerged]
+    #mergeStops = await asyncio.gather(*tasksMergeStops)
+    return correspondancesMerged[skip: skip + limit]
 
 async def processStop(stop, stops):
     if stop['fields']['location_type'] == '0' :
