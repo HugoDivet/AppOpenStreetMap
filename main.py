@@ -162,13 +162,16 @@ def create_legend(m):
 async def createCorrespondences(stop):
     popup_content = """
     <h4>Lignes :</p>
-    <ul style='list-style: none; margin-left: -20px;'>
-        {correspondences}
-    </ul>
+    <table>
+        <tr>
+            {correspondences}
+        </tr>
+    </table>
     """
-    correspondence_list = ""
+    correspondence_list = "<td><ul style='list-style:none;'>"
+    ligne_list = ""
 
-    for correspondence in stop['correspondences']:
+    for i, correspondence in enumerate(stop['correspondences'], 1):
         line_color = correspondence['color']
         line_name = correspondence['name']
         text_color = "#000000" if line_color == "#ffffff" else "#ffffff"
@@ -176,7 +179,14 @@ async def createCorrespondences(stop):
         square_html += f"<div style='display: flex; align-items: center; justify-content: center; width: 55px; height: 40px; background-color: {line_color};'><span style='font-weight: bold; color:{text_color};'>{line_name}</span></div>"
         square_html += "</div>"
         correspondence_html = f"<li style='margin-bottom: 5px;'>{square_html}</li>"
-        correspondence_list += correspondence_html
+        ligne_list += correspondence_html
+
+        if i % 3 == 0 or i == len(stop['correspondences']):
+            correspondence_list += ligne_list
+            ligne_list = ""
+            if i != len(stop['correspondences']):
+                correspondence_list += "</ul></td><td><ul style='list-style:none;'>"
+    correspondence_list += "</ul></td>"
 
 
     popup_content = popup_content.format(correspondences=correspondence_list)
