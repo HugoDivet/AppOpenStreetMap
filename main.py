@@ -78,7 +78,7 @@ async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinec
         circuit_color = circuit['circuit_color']
 
         text_color = "#000000" if circuit_color == "#ffffff" else "#ffffff"
-        popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:{text_color};" \
+        popup = f"<h4 style='white-space: nowrap;'>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:{text_color};" \
             f"padding:5px;border-radius:5px;'>{circuit_name}</div></b></span></h4><br>"
 
         if circuit['circuit_type'] == 'Bus':
@@ -95,7 +95,7 @@ async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinec
             locations=circuit['coordinates'],
             popup=folium.Popup(popup, max_width='auto'),
             color=circuit['circuit_color'],
-            weight=2,
+            weight=4,
             opacity=1
         ).add_to(lineCluster)
 
@@ -175,7 +175,7 @@ async def createCorrespondences(stop):
         </tr>
     </table>
     """
-    correspondence_list = "<td><ul style='list-style:none;'>"
+    correspondence_list = "<td style='vertical-align:top'><ul style='list-style:none;'>"
     ligne_list = ""
 
     for i, correspondence in enumerate(stop['correspondences'], 1):
@@ -192,7 +192,7 @@ async def createCorrespondences(stop):
             correspondence_list += ligne_list
             ligne_list = ""
             if i != len(stop['correspondences']):
-                correspondence_list += "</ul></td><td><ul style='list-style:none;'>"
+                correspondence_list += "</ul></td><td style='vertical-align:top'><ul style='list-style:none;'>"
     correspondence_list += "</ul></td>"
 
 
