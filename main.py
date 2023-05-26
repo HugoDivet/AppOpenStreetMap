@@ -76,6 +76,7 @@ async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinec
 
         circuit_name = circuit['circuit_name']
         circuit_color = circuit['circuit_color']
+
         popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
             f"padding:5px;border-radius:5px;'>{circuit_name}</div></b></span></h4><br>"
 

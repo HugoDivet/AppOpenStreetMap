@@ -138,22 +138,5 @@ async def fetchDatasFromRoute(route):
         async with session.get(API_URL + route) as response:
             return await response.json()
 
-async def process_circuit(circuit):
-    inverted_coordinates = []
-    for coordinate in circuit['fields']['shape']['coordinates'][0]:
-        inverted_coordinate = [coordinate[1], coordinate[0]]
-        inverted_coordinates.append(inverted_coordinate)
-
-    circuitModel = {
-        'circuit_id': circuit['fields']['route_id'],
-        'circuit_number': circuit['fields']['route_short_name'],
-        'circuit_name': circuit['fields']['route_long_name'],
-        'coordinates': inverted_coordinates,
-        'circuit_color': '#' + circuit['fields']['route_color'],
-        'circuit_type': circuit['fields']['route_type']
-    }
-
-    return circuitModel
-
 if __name__ == "__main__":
     uvicorn.run("apiStreetMap:api", host="127.0.0.1", port=8000, workers=2, reload=True)
