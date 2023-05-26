@@ -66,13 +66,13 @@ async def processStop(stop, circuits, m, busmarkerscluster, trammarkerscluster, 
 
 async def processCircuit(circuit, m, buslinecluster, tramlinecluster, ferrylinecluster):
 
-    circuit_name = circuit['circuit_name']
-    circuit_color = circuit['circuit_color']
-
-    popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
-            f"padding:5px;border-radius:5px;'>{circuit_name}</div></b></span></h4><br>" \
-
     if circuit is not None:
+
+        circuit_name = circuit['circuit_name']
+        circuit_color = circuit['circuit_color']
+        popup = f"<h4>Numéro de la ligne : <span><b><div style='display:inline-block;background-color:{circuit_color};color:#fff;" \
+            f"padding:5px;border-radius:5px;'>{circuit_name}</div></b></span></h4><br>"
+
         if circuit['circuit_type'] == 'Bus':
             lineCluster = buslinecluster
             popup += "<i class='fa-sharp fa-solid fa-bus' style='font-size: 24px;'></i><br><br>"
